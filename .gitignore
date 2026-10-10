@@ -1,0 +1,10 @@
+/vendor/
+/config/config.php
+/storage/layout.json
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+/storage/generated/*
+!/storage/generated/.gitkeep
+!/storage/logs/
+/storage/logs/*
+!/storage/logs/.gitkeep

@@ -1,0 +1,90 @@
+<?php
+
+return [
+    'fonts' => [
+        'georama' => 'Georama.ttf',
+        'georama_bold' => 'Georama-Bold.ttf',
+        'karvest' => 'Karvest-Black.otf',
+        'karvest_bold' => 'Karvest-Black.otf',
+    ],
+    'faces' => [
+        'frontal' => [
+            'background' => 'frontal.png',
+            'elements' => [
+                [
+                    'id' => 'foto',
+                    'kind' => 'image',
+                    'source' => 'foto',
+                    'x' => 0.27, 'y' => 0.4515, 'w' => 0.54, 'h' => 0.585,
+                    'radius' => 0.0,
+                    'border_color' => '#FFFFFF',
+                    'border_width' => 0,
+                    'enabled' => true,
+                ],
+                [
+                    'id' => 'nombres',
+                    'kind' => 'text',
+                    'bind' => 'nombres',
+                    'x' => 0.50, 'y' => 0.774,
+                    'size' => 220, 'color' => '#333333',
+                    'font' => 'karvest', 'align' => 'center',
+                    'bold' => true,
+                    'max_width' => 0.90, 'max_lines' => 1, 'min_size' => 96,
+                    'enabled' => true,
+                ],
+                [
+                    'id' => 'cedula',
+                    'kind' => 'text',
+                    'bind' => 'cedula',
+                    'x' => 0.50, 'y' => 0.8335,
+                    'size' => 134, 'color' => '#333333',
+                    'font' => 'karvest', 'align' => 'center',
+                    'bold' => true,
+                    'max_width' => 0.90, 'enabled' => true,
+                ],
+                [
+                    'id' => 'cargo',
+                    'kind' => 'text',
+                    'bind' => 'cargo',
+                    'x' => 0.50, 'y' => 0.938,
+                    'size' => 164, 'color' => '#FFFFFF',
+                    'font' => 'karvest', 'align' => 'center',
+                    'bold' => true,
+                    'max_width' => 0.95, 'max_lines' => 1, 'min_size' => 72,
+                    'enabled' => true,
+                ],
+                [
+                    'id' => 'dependencia',
+                    'kind' => 'text',
+                    'bind' => 'dependencia',
+                    'x' => 0.50, 'y' => 0.978,
+                    'size' => 144, 'color' => '#FFFFFF',
+                    'font' => 'karvest', 'align' => 'center',
+                    'bold' => true,
+                    'max_width' => 0.95, 'max_lines' => 1, 'min_size' => 72,
+                    'enabled' => true,
+                ],
+            ],
+        ],
+        'reverso' => [
+            'background' => 'reverso.png',
+            'elements' => [
+                [
+                    'id' => 'qr',
+                    'kind' => 'qrcode',
+                    'x' => 0.501, 'y' => 0.25, 'w' => 0.385, 'h' => 0.2505,
+                    'enabled' => true,
+                ],
+                [
+                    'id' => 'codigo',
+                    'kind' => 'text',
+                    'bind' => 'codigo',
+                    'x' => 0.50, 'y' => 0.47,
+                    'size' => 40, 'color' => '#273376',
+                    'font' => 'karvest', 'align' => 'center',
+                    'max_width' => 0.86, 'enabled' => false,
+                ],
+            ],
+        ],
+    ],
+];

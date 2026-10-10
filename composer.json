@@ -1,0 +1,25 @@
+{
+    "name": "venezuela-renace/carnets",
+    "description": "Sistema de gestion y generacion de carnets - Plan Venezuela Renace",
+    "type": "project",
+    "require": {
+        "php": ">=8.1",
+        "ext-pdo": "*",
+        "ext-mbstring": "*",
+        "ext-gd": "*",
+        "ext-imagick": "*",
+        "endroid/qr-code": "^6.0",
+        "setasign/fpdf": "^1.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}
