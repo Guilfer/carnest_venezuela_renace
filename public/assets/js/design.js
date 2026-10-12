@@ -90,7 +90,19 @@
             node.style.borderRadius = el.kind === 'image' && el.radius ? (el.radius * stage.offsetWidth) + 'px' : '0';
             node.style.border = el.kind === 'image' && el.border_width
                 ? el.border_width + 'px solid ' + (el.border_color || '#fff') : 'none';
-            node.textContent = el.kind === 'qrcode' ? 'QR' : 'FOTO';
+            node.style.backgroundImage = 'none';
+            node.style.backgroundSize = 'auto';
+            node.style.backgroundRepeat = 'no-repeat';
+            node.style.backgroundPosition = 'center';
+            if (el.kind === 'qrcode') {
+                node.textContent = 'QR';
+            } else if (el.file) {
+                node.textContent = '';
+                node.style.backgroundImage = 'url(' + cfg.resource + '?file=' + encodeURIComponent(el.file) + ')';
+                node.style.backgroundSize = el.fit === 'contain' ? 'contain' : 'cover';
+            } else {
+                node.textContent = 'FOTO';
+            }
         }
     }
 
@@ -233,6 +245,13 @@
             bind.disabled = true;
             props.appendChild(field('Dato', bind));
         } else {
+            if (el.kind === 'qrcode') {
+                var qc = document.createElement('input');
+                qc.type = 'color';
+                qc.value = el.color || '#273376';
+                qc.addEventListener('input', function () { el.color = qc.value; });
+                props.appendChild(field('Color QR', qc));
+            }
             props.appendChild(field('Ancho (%)', numberInput(Math.round(el.w * 1000) / 10, 0.1, function (v) {
                 el.w = round(v / 100); styleNode(el);
             })));
@@ -252,6 +271,22 @@
                 bc.value = el.border_color || '#ffffff';
                 bc.addEventListener('input', function () { el.border_color = bc.value; styleNode(el); });
                 props.appendChild(field('Color borde', bc));
+
+                var fit = document.createElement('select');
+                ['cover', 'contain'].forEach(function (f) {
+                    var o = document.createElement('option');
+                    o.value = f; o.textContent = f;
+                    o.selected = (el.fit || 'cover') === f;
+                    fit.appendChild(o);
+                });
+                fit.addEventListener('change', function () { el.fit = fit.value; styleNode(el); });
+                props.appendChild(field('Encaje (fit)', fit));
+
+                var mask = document.createElement('input');
+                mask.type = 'text';
+                mask.value = el.mask || '';
+                mask.addEventListener('change', function () { el.mask = mask.value || undefined; });
+                props.appendChild(field('Máscara', mask));
             }
         }
     }

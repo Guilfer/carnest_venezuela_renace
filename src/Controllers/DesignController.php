@@ -67,6 +67,35 @@ final class DesignController
         exit;
     }
 
+    public function asset(): void
+    {
+        Auth::requireAdmin();
+
+        $base = realpath(Kernel::templates());
+        $path = realpath(Kernel::templates((string) Request::input('file', '')));
+
+        if ($base === false || $path === false || !str_starts_with($path, $base) || !is_file($path)) {
+            abort(404);
+        }
+
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $mime = match ($extension) {
+            'png' => 'image/png',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'webp' => 'image/webp',
+            'svg' => 'image/svg+xml',
+            default => 'application/octet-stream',
+        };
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        header('Content-Type: ' . $mime);
+        header('Cache-Control: no-store');
+        readfile($path);
+        exit;
+    }
+
     public function preview(): void
     {
         Auth::requireAdmin();

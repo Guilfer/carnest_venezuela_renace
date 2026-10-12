@@ -84,15 +84,7 @@ final class CarnetRenderer
         $boxW = max(1, $boxW);
         $boxH = max(1, $boxH);
 
-        $relative = $carnet['foto'] ?? null;
-        $photoPath = $relative ? Kernel::storage('uploads/' . $relative) : null;
-
-        if ($photoPath && is_file($photoPath)) {
-            $photo = new Imagick($photoPath);
-            $this->fitCover($photo, $boxW, $boxH);
-        } else {
-            $photo = $this->placeholderImage($carnet, $boxW, $boxH);
-        }
+        $photo = $this->loadElementImage($el, $carnet, $boxW, $boxH);
 
         $radius = (int) round(($el['radius'] ?? 0) * $width);
         if ($radius > 0) {
@@ -119,6 +111,84 @@ final class CarnetRenderer
         $y = (int) round($el['y'] * $height - $boxH / 2);
         $im->compositeImage($photo, Imagick::COMPOSITE_OVER, $x, $y);
         $photo->clear();
+    }
+
+    private function loadElementImage(array $el, array $carnet, int $boxW, int $boxH): Imagick
+    {
+        $path = $this->resolveImagePath($el, $carnet);
+
+        if ($path === null) {
+            $photo = $this->placeholderImage($carnet, $boxW, $boxH);
+        } elseif (($el['fit'] ?? 'cover') === 'contain') {
+            $photo = $this->containImage($path, $boxW, $boxH);
+        } else {
+            $photo = new Imagick($path);
+            $this->fitCover($photo, $boxW, $boxH);
+        }
+
+        $mask = $el['mask'] ?? null;
+        if (is_string($mask) && $mask !== '') {
+            $this->applyMask($photo, $mask, $boxW, $boxH);
+        }
+
+        return $photo;
+    }
+
+    private function resolveImagePath(array $el, array $carnet): ?string
+    {
+        if (($el['source'] ?? null) === 'foto') {
+            $relative = $carnet['foto'] ?? null;
+            $path = $relative ? Kernel::storage('uploads/' . $relative) : null;
+            return ($path && is_file($path)) ? $path : null;
+        }
+
+        $file = $el['file'] ?? null;
+        if (is_string($file) && $file !== '') {
+            $template = Kernel::templates($file);
+            if (is_file($template)) {
+                return $template;
+            }
+            $asset = Kernel::root() . '/public/assets/img/' . ltrim($file, '/');
+            if (is_file($asset)) {
+                return $asset;
+            }
+        }
+
+        return null;
+    }
+
+    private function containImage(string $path, int $boxW, int $boxH): Imagick
+    {
+        $src = new Imagick($path);
+        $srcW = max(1, $src->getImageWidth());
+        $srcH = max(1, $src->getImageHeight());
+        $scale = min($boxW / $srcW, $boxH / $srcH);
+        $newW = max(1, (int) round($srcW * $scale));
+        $newH = max(1, (int) round($srcH * $scale));
+        $src->resizeImage($newW, $newH, Imagick::FILTER_LANCZOS, 1);
+
+        $canvas = new Imagick();
+        $canvas->newImage($boxW, $boxH, new ImagickPixel('transparent'), 'png');
+        $canvas->compositeImage($src, Imagick::COMPOSITE_OVER, (int) round(($boxW - $newW) / 2), (int) round(($boxH - $newH) / 2));
+        $src->clear();
+
+        return $canvas;
+    }
+
+    private function applyMask(Imagick $image, string $maskFile, int $boxW, int $boxH): void
+    {
+        $path = Kernel::templates('masks/' . $maskFile);
+        if (!is_file($path)) {
+            return;
+        }
+
+        $mask = new Imagick($path);
+        if ($mask->getImageWidth() !== $boxW || $mask->getImageHeight() !== $boxH) {
+            $mask->resizeImage($boxW, $boxH, Imagick::FILTER_LANCZOS, 1);
+        }
+        $image->setImageAlphaChannel(Imagick::ALPHACHANNEL_ACTIVATE);
+        $image->compositeImage($mask, Imagick::COMPOSITE_DSTIN, 0, 0);
+        $mask->clear();
     }
 
     private function drawText(Imagick $im, array $el, array $carnet, array $layout, int $width, int $height): void
@@ -170,7 +240,7 @@ final class CarnetRenderer
         $url = $this->qr->verifyUrl($token);
         $sizeOpt = (int) config('carnet.qr_size', 700);
         $margin = (int) config('carnet.qr_margin', 4);
-        $png = $this->qr->png($url, max($size, $sizeOpt), $margin, self::BRAND);
+        $png = $this->qr->png($url, max($size, $sizeOpt), $margin, $el['color'] ?? self::BRAND);
 
         $qr = new Imagick();
         $qr->readImageBlob($png);

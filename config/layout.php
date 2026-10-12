@@ -16,6 +16,8 @@ return [
                     'kind' => 'image',
                     'source' => 'foto',
                     'x' => 0.27, 'y' => 0.4515, 'w' => 0.54, 'h' => 0.585,
+                    'fit' => 'cover',
+                    'mask' => 'foto-frontal.png',
                     'radius' => 0.0,
                     'border_color' => '#FFFFFF',
                     'border_width' => 0,
@@ -73,6 +75,7 @@ return [
                     'id' => 'qr',
                     'kind' => 'qrcode',
                     'x' => 0.501, 'y' => 0.25, 'w' => 0.385, 'h' => 0.2505,
+                    'color' => '#333333',
                     'enabled' => true,
                 ],
                 [

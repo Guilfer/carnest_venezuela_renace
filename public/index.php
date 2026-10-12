@@ -56,6 +56,7 @@ $router->get('verificar/{token}', [VerifyController::class, 'show'], auth: false
 $router->get('diseno', [DesignController::class, 'edit']);
 $router->get('diseno/fondo/{face}', [DesignController::class, 'background']);
 $router->get('diseno/fuente/{font}', [DesignController::class, 'font']);
+$router->get('diseno/recurso', [DesignController::class, 'asset']);
 $router->get('diseno/actual', [DesignController::class, 'current']);
 $router->post('diseno', [DesignController::class, 'save']);
 $router->post('diseno/previa', [DesignController::class, 'preview']);

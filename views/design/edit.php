@@ -52,6 +52,7 @@ $sampleJson = json_encode($sample, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASH
 <script type="application/json" id="design-config"><?= json_encode([
     'background' => url('diseno/fondo/{face}'),
     'font' => url('diseno/fuente/{font}'),
+    'resource' => url('diseno/recurso'),
     'preview' => url('diseno/previa'),
     'current' => url('diseno/actual'),
     'token' => csrf_token(),

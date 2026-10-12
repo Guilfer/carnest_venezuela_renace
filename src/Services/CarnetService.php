@@ -159,12 +159,24 @@ final class CarnetService
 
     private function savePhoto(?array $file): ?string
     {
-        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
             return null;
         }
 
-        if ($file['size'] > 8 * 1024 * 1024) {
-            throw new \RuntimeException('La foto supera el máximo de 8 MB.');
+        switch ($file['error'] ?? UPLOAD_ERR_OK) {
+            case UPLOAD_ERR_OK:
+                break;
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                throw new \RuntimeException('La foto supera el límite de 20 MB permitido. Sube una imagen más liviana.');
+            case UPLOAD_ERR_PARTIAL:
+                throw new \RuntimeException('La carga de la foto se interrumpió. Inténtalo de nuevo.');
+            default:
+                throw new \RuntimeException('No se pudo subir la foto. Revisa el archivo e intenta de nuevo.');
+        }
+
+        if ($file['size'] > 20 * 1024 * 1024) {
+            throw new \RuntimeException('La foto supera el máximo de 20 MB.');
         }
 
         $info = @getimagesize($file['tmp_name']);
@@ -178,9 +190,6 @@ final class CarnetService
             mkdir($dir, 0775, true);
         }
 
-        $name = bin2hex(random_bytes(16)) . '.jpg';
-        $destination = $dir . '/' . $name;
-
         $image = new \Imagick($file['tmp_name']);
         $image->setImageOrientation(\Imagick::ORIENTATION_TOPLEFT);
         $image->stripImage();
@@ -188,13 +197,31 @@ final class CarnetService
         if ($image->getImageWidth() > $maxDim || $image->getImageHeight() > $maxDim) {
             $image->thumbnailImage($maxDim, $maxDim, true);
         }
-        $image->setImageFormat('jpeg');
-        $image->setImageCompressionQuality(90);
-        $image->setImageBackgroundColor('white');
-        $flat = $image->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
-        $flat->writeImage($destination);
-        $image->clear();
-        $flat->clear();
+
+        $hasTransparency = false;
+        if ($image->getImageAlphaChannel()) {
+            $range = @$image->getImageChannelRange(\Imagick::CHANNEL_ALPHA);
+            if (is_array($range) && (($range['minima'] ?? PHP_INT_MAX) < 65535)) {
+                $hasTransparency = true;
+            }
+        }
+
+        $name = bin2hex(random_bytes(16)) . ($hasTransparency ? '.png' : '.jpg');
+        $destination = $dir . '/' . $name;
+
+        if ($hasTransparency) {
+            $image->setImageFormat('png');
+            $image->writeImage($destination);
+            $image->clear();
+        } else {
+            $image->setImageFormat('jpeg');
+            $image->setImageCompressionQuality(90);
+            $image->setImageBackgroundColor('white');
+            $flat = $image->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
+            $flat->writeImage($destination);
+            $image->clear();
+            $flat->clear();
+        }
 
         return 'photos/' . $name;
     }
