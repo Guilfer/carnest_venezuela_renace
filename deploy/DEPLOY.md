@@ -10,7 +10,7 @@ El stack es **PHP puro (sin framework) + Apache + MySQL/MariaDB + ImageMagick + 
 | Componente | Requisito |
 |---|---|
 | SO | Debian 12 (bookworm) o Ubuntu 22.04/24.04 |
-| PHP | >= 8.1 (el repo usa 8.2/8.4) |
+| PHP | **8.4 (recomendada)** – mínimo 8.1, ver nota en la tabla |
 | Extensiones PHP | `pdo`, `pdo_mysql`, `mbstring`, `gd`, `imagick`, `zip`, `xml`/`simplexml` |
 | Base de datos | MySQL 8 o MariaDB 10.6+ |
 | Servidor web | Apache 2.4 con `mod_rewrite` y `libapache2-mod-php` |
@@ -18,6 +18,7 @@ El stack es **PHP puro (sin framework) + Apache + MySQL/MariaDB + ImageMagick + 
 | PHP vars | `upload_max_filesize=20M`, `post_max_size=22M`, `memory_limit>=512M` |
 
 Notas importantes:
+- **Versión recomendada: PHP 8.4.** El `composer.lock` fija `endroid/qr-code 6.1.3`, que exige `php ^8.4`. En 8.3 no instala con el lock actual; en 8.5 funcionaría pero 8.4 es la probada en el proyecto (el código de la app usa solo features de 8.1).
 - El `DocumentRoot` **debe** apuntar a la carpeta `public/` (no a la raíz del proyecto).
 - `public/.htaccess` usa directivas `php_value`, que **solo funcionan con `mod_php`** (no con php-fpm). Si usas php-fpm, mueve esos límites a `php.ini` y elimina las 3 primeras líneas del `.htaccess`.
 - El QR impreso codifica `carnet.verify_base` + token. **Si cambia el dominio hay que regenerar todos los carnets** (ver paso 9).
@@ -33,11 +34,23 @@ sudo apt update && sudo apt upgrade -y
 # Apache + MariaDB
 sudo apt install -y apache2 mariadb-server
 
-# PHP 8.2 + extensiones requeridas por composer.json y el código
+# ---- PHP 8.4 (recomendada) ----
+# Ubuntu 24.04/22.04 usa el PPA ondrej/php:
+#   sudo add-apt-repository -y ppa:ondrej/php && sudo apt update
+# Debian 12 no trae 8.4 en sus repos; se usa Sury:
+sudo apt install -y apt-transport-https lsb-release ca-certificates curl
+sudo curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg \
+  https://packages.sury.org/php/apt.gpg
+echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] \
+  https://packages.sury.org/php/ $(lsb_release -sc) main" \
+  | sudo tee /etc/apt/sources.list.d/php-sury.list
+sudo apt update
+
+# PHP 8.4 + extensiones requeridas por composer.json y el código
 sudo apt install -y \
-  php8.2 php8.2-cli libapache2-mod-php8.2 \
-  php8.2-mysql php8.2-mbstring php8.2-gd php8.2-imagick \
-  php8.2-zip php8.2-xml php8.2-curl php8.2-opcache
+  php8.4 php8.4-cli libapache2-mod-php8.4 \
+  php8.4-mysql php8.4-mbstring php8.4-gd php8.4-imagick \
+  php8.4-zip php8.4-xml php8.4-curl php8.4-opcache
 
 # Herramientas
 sudo apt install -y imagemagick unzip git curl
@@ -48,7 +61,7 @@ sudo mv composer.phar /usr/local/bin/composer
 composer --version
 ```
 
-> Si necesitas PHP 8.3/8.4, agrega el repo de Sury (`deb.sury.org`) y reemplaza `php8.2` por la versión elegida. Mantén `libapache2-mod-php<version>`.
+> ¿Necesitas otra versión? El lock actual **no instala en PHP 8.3** (endroid pide `^8.4`). Para 8.3, baja la dependencia primero: `composer require endroid/qr-code:^6.0 --update-with-dependencies`.
 
 Verifica extensiones:
 ```bash
@@ -62,8 +75,8 @@ php -m | grep -iE 'pdo_mysql|mbstring|gd|imagick|zip|xml'
 Edita el `php.ini` de Apache (y el de CLI para los scripts):
 
 ```bash
-sudo nano /etc/php/8.2/apache2/php.ini
-sudo nano /etc/php/8.2/cli/php.ini
+sudo nano /etc/php/8.4/apache2/php.ini
+sudo nano /etc/php/8.4/cli/php.ini
 ```
 
 Ajusta:
@@ -373,10 +386,10 @@ Cron sugerido (ejemplo, `/etc/cron.d/carnets-backup`):
 | Síntoma | Causa probable | Solución |
 |---|---|---|
 | Error 500 al cargar `/` | `config/config.php` ausente o credenciales DB malas | Revisar paso 6 y logs de Apache |
-| 500 por `php_value` en `.htaccess` | Se está usando php-fpm en vez de `mod_php` | Instalar `libapache2-mod-php8.2` o mover límites a `php.ini` |
+| 500 por `php_value` en `.htaccess` | Se está usando php-fpm en vez de `mod_php` | Instalar `libapache2-mod-php8.4` o mover límites a `php.ini` |
 | Rutas 404 (excepto `/`) | `mod_rewrite` desactivado o `AllowOverride None` | `a2enmod rewrite` + `AllowOverride All` |
 | No se pueden subir fotos | Límites de PHP bajos | Ajustar `php.ini` (paso 2) |
-| No se generan imágenes/QR | Falta `php8.2-imagick` o `php8.2-gd` | Instalar y reiniciar Apache |
+| No se generan imágenes/QR | Falta `php8.4-imagick` o `php8.4-gd` | Instalar y reiniciar Apache |
 | "No se pudo conectar a la base de datos" | Usuario/clave/DB incorrectos | Verificar paso 4 y 6 |
 | QR apunta al dominio viejo | `verify_base` desactualizado o carnets no regenerados | Actualizar config y regenerar |
 | Permiso denegado al escribir en `storage/` | Propietario incorrecto | `chown -R www-data:www-data storage` |
